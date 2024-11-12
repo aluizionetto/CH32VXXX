@@ -1,5 +1,5 @@
 <h1 align="center">
-  Cartão SD com microcontrolador RISC V CH32V32003 
+  Cartão SD com microcontrolador RISC V CH32V003 
 </h1>
 <p align="left"> 
   Código desenvolvido para utilizar cartão SD com microcontrolador CH32V003F4P6 com porta SPI. Projeto foi desenvolvido para Mounriver Studio indicada pelo fabricante WCH.
