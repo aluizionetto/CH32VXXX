@@ -324,7 +324,7 @@ DSTATUS disk_initialize (
 	if (drv) return RES_NOTRDY;
 
 	dly_us(10000);			/* 10ms */
-	SPI_set_prescaler(7);
+	SPI_set_prescaler(SPI_PREESCALER);
 	CS_H();	
 
 	for (n = 10; n; n--) rcvr_mmc(buf, 1);	/* Apply 80 dummy clocks and the card gets ready to receive command */

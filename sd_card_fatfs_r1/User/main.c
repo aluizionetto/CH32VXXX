@@ -24,7 +24,8 @@
 
 #include "debug.h"
 #include "hw_spi\hw_spi.h"
-#include "ff\ff.h"		/* Declarations of FatFs API */
+#include "ff/ff.h"		/* Declarations of FatFs API */
+#include "ff/diskio.h"
 
 /* Global define */
 
@@ -259,6 +260,28 @@ void ADC1_IRQHandler(void) {
 	}
 }
 
+void LED_OFF(void) {
+	GPIOD->BSHR = GPIO_Pin_4;
+}
+void LED_ON (void) {
+	GPIOD->BCR = GPIO_Pin_4;
+}
+void Init_GPIOLED(void) {
+	GPIO_InitTypeDef  GPIO_InitStructure = {0};
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
+
+	/* LED NO PD4 */
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	LED_OFF();
+}
+
+
+
 
 
 
@@ -274,6 +297,7 @@ int main(void)
 	//variaveis para controle ff
 	UINT bw;
 	FRESULT fr;
+	uint32_t n_sec;
 
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
@@ -286,7 +310,9 @@ int main(void)
 #endif
 	USARTx_CFG();
 	ADC_Function_Init(); //configura ADC A2 - PC4
+	Init_GPIOLED();
 	TIM2_INT_Init(1000-1,48000-1);//interrupção do timer 2 para 1s
+
 
 
 	//printf("SystemClk:%d\r\n",SystemCoreClock);
@@ -305,7 +331,13 @@ int main(void)
 
 
 	//monta unidade
-	fr = f_mount(&FatFs, "", 0);		/* Give a work area to the default drive */
+	fr = f_mount(&FatFs, "", 1);		/* Give a work area to the default drive */
+
+	//tamanho da unidade
+	disk_ioctl(0,GET_SECTOR_COUNT,(void *)&n_sec);
+	USART_str("SD len:");
+	USART_int(n_sec>>1);  //cada sector de 512 bytes
+	USART_str(" kB\r\n");
 
 
 	while(1)
@@ -323,12 +355,14 @@ int main(void)
 			USART_str(buff_msg);
 
 			//grava em arquivo
+			LED_ON();
 			fr = f_open(&Fil, "newfile.txt", FA_WRITE | FA_OPEN_APPEND);	/* Create a file */
 			if (fr == FR_OK) {
 				f_write(&Fil, buff_msg, str_len(buff_msg), &bw);	/* Write data to the file */
 				fr = f_close(&Fil);							/* Close the file */
 				if (fr == FR_OK && bw == str_len(buff_msg)) {		/* Arquivo Escrito com sucesso */
 					USART_str("DATA OK\n\r");
+					LED_OFF();
 				}
 				else
 				{
