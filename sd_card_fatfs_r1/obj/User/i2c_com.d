@@ -1,5 +1,4 @@
-User/main.o: ../User/main.c \
- D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Debug/debug.h \
+User/i2c_com.o: ../User/i2c_com.c ../User/i2c_com.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Core/core_riscv.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\User/system_ch32v00x.h \
@@ -12,6 +11,7 @@ User/main.o: ../User/main.c \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_gpio.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_i2c.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\User/ch32v00x_it.h \
+ D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Debug/debug.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_iwdg.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_misc.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_pwr.h \
@@ -21,12 +21,9 @@ User/main.o: ../User/main.c \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_usart.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_wwdg.h \
  D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_opa.h \
- D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x.h \
- ../User/hw_spi\hw_spi.h ../User/ff/ff.h \
- D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\User/ff\ffconf.h \
- ../User/ff/diskio.h ../User/ff/ff.h ../User/rtc_ds1307.h
+ D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x.h
 
-D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Debug/debug.h:
+../User/i2c_com.h:
 
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x.h:
 
@@ -52,6 +49,8 @@ D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_i2c.h:
 
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\User/ch32v00x_it.h:
 
+D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Debug/debug.h:
+
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_iwdg.h:
 
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_misc.h:
@@ -71,15 +70,3 @@ D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_wwdg.h:
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x_opa.h:
 
 D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\Peripheral\inc/ch32v00x.h:
-
-../User/hw_spi\hw_spi.h:
-
-../User/ff/ff.h:
-
-D:\RISC-V\mrs_workspace\sd_card_fatfs_r1\User/ff\ffconf.h:
-
-../User/ff/diskio.h:
-
-../User/ff/ff.h:
-
-../User/rtc_ds1307.h:
