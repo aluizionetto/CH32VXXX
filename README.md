@@ -3,6 +3,10 @@
 </h1>
 <p align="left"> 
   Código desenvolvido para utilizar cartão SD com microcontrolador CH32V003F4P6 com porta SPI. Projeto foi desenvolvido para Mounriver Studio indicada pelo fabricante WCH.
+
+  Para sensores foi utilizado porta do conversor AD de bits no pino PC4  e sensor de umidade e temperatura AHT20 pela porta I2C.
+
+  Vídeo de demonstração: https://youtu.be/99U5dsnW7jw
 </p>
  <p align ="left"> 
    Pinos Utilizados: 
