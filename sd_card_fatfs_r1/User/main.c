@@ -1,35 +1,39 @@
 /********************************** (C) COPYRIGHT *******************************
  * File Name          : main.c
- * Author             : WCH
- * Version            : V1.0.0
- * Date               : 2022/08/08
- * Description        : Main program body.
- *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
- * microcontroller manufactured by Nanjing Qinheng Microelectronics.
- *******************************************************************************/
+ * Author             : Aluizio d'Affonsêca Netto
+ */
 
 /*
- *@Note
- *Multiprocessor communication mode routine:
- *Master:USART1_Tx(PD5)\USART1_Rx(PD6).
- *This routine demonstrates that USART1 receives the data sent by CH341 and inverts
- *it and sends it (baud rate 115200).
+ *
+ * Sistema para fazer a leitura do conversor AD (PC4) e sensor (AHT20) por I2C
+ * e efetuar registro dos valores em cartão SD com biblioteca FatFs.
+ *
  *
  *Hardware connection:PD5 -- Rx
- *                     PD6 -- Tx
+ *                    PD6 -- Tx
+ *
+ * Microcontrolador - SD CARD (SPI)
+ * PC5 - SCK (5)
+ * PC6 - MOSI (2)
+ * PC7 - MISO (7)
+ * PC0 - CS (1)
+ * VDD(3.3V) - VDD (4)
+ * VSS (GND) - GND(6)
+ *
+ *
+ * Sensores e RTC
+ * PC2 - SCL
+ * PC1 - SDA
  *
  */
 
+/* bibliotecas */
 #include "debug.h"
 #include "hw_spi\hw_spi.h"
 #include "ff/ff.h"		/* Declarations of FatFs API */
 #include "ff/diskio.h"
 #include "rtc_ds1307.h"
-
-/* Global define */
-
+#include "sensor_aht20.h"
 
 /* Global Variable */
 FATFS FatFs;		/* FatFs work area needed for each volume */
@@ -42,7 +46,7 @@ volatile uint16_t count_adc = 0;
 char buff_msg[64];  //buffer para texto
 //buffer para comando de serial
 #define LEN_BUFF_SERIAL_IN (32)
-char buff_serial_in[LEN_BUFF_SERIAL_IN]; // buufer para recepção da serial
+char buff_serial_in[LEN_BUFF_SERIAL_IN]; // buffer para recepção da serial
 volatile int8_t buff_serial_idx = 0;
 volatile uint16_t flag_cmd = 0;
 
@@ -103,9 +107,9 @@ void USART_str(char *d) {
 	}
 }
 
-void USART_int(int32_t num)
+void USART_int(int32_t num, int16_t pdiv)
 {
-	uint32_t g;
+	int16_t g;
 	uint32_t div = 1000000000;
 	int8_t s0 = 0;
 	if (num < 0)
@@ -120,8 +124,9 @@ void USART_int(int32_t num)
 	}
 	else
 	{
-		for (g = 0 ; g < 10; g++)
+		for (g = 10 ; g > 0; g--)
 		{
+			if ((pdiv > 0) && (g == pdiv)) USART_char('.');
 			if (num >= div)
 			{
 				s0 = 1;
@@ -137,8 +142,8 @@ void USART_int(int32_t num)
 	}
 }
 
-void conv_int2str (char *bf,uint32_t num, uint8_t cat) {
-	uint32_t g;
+void conv_int2str (char *bf,uint32_t num, uint8_t cat, int16_t pdiv) {
+	int16_t g;
 	uint32_t div = 1000000000;
 	int8_t s0 = 0;
 
@@ -160,20 +165,22 @@ void conv_int2str (char *bf,uint32_t num, uint8_t cat) {
 	}
 	else
 	{
-		for (g = 0 ; g < 10; g++)
+		for (g = 10 ; g > 0; g--)
 		{
+			if ((pdiv > 0) && (g == pdiv)){
+				*bf++ = '.';
+			}
 			if (num >= div)
 			{
 				s0 = 1;
 				*bf++ = (num/div) + '0';
-				*bf = '\0';
 				num %= div;
 			}
 			else if(s0)
 			{
 				*bf++ = '0';
-				*bf = '\0';
 			}
+			*bf = '\0';
 			div /=10;
 		}
 	}
@@ -208,17 +215,17 @@ int32_t conv_strtoint(char *bf){
 }
 
 void conv_rtc2str(char *bf, uint8_t cat){
-	conv_int2str(bf,time_rtc.dayOfMonth,cat);
+	conv_int2str(bf,time_rtc.dayOfMonth,cat,-1);
 	str_cat(bf,"/");
-	conv_int2str(bf,time_rtc.month,1);
+	conv_int2str(bf,time_rtc.month,1,-1);
 	str_cat(bf,"/");
-	conv_int2str(bf,time_rtc.year,1);
+	conv_int2str(bf,time_rtc.year,1,-1);
 	str_cat(bf," ");
-	conv_int2str(bf,time_rtc.hour,1);
+	conv_int2str(bf,time_rtc.hour,1,-1);
 	str_cat(bf,":");
-	conv_int2str(bf,time_rtc.minute,1);
+	conv_int2str(bf,time_rtc.minute,1,-1);
 	str_cat(bf,":");
-	conv_int2str(bf,time_rtc.second,1);
+	conv_int2str(bf,time_rtc.second,1,-1);
 }
 
 
@@ -276,6 +283,19 @@ void processa_cmd(void) {
 		DS1307_startClock();
 
 		USART_str("RTC_AJUSTE OK\n\r");
+	}
+
+	//le sensor de umidade e temperatura
+	if (*p_arg[0] == 's') {
+		int32_t temp, hum;
+
+		AHT20_Read(&temp,&hum);
+
+		USART_str("Sens:");
+		USART_int(temp,1);
+		USART_str(";");
+		USART_int(hum,1);
+		USART_str("\n\r");
 	}
 
 }
@@ -403,6 +423,7 @@ int main(void)
 	FRESULT fr;
 	uint32_t n_sec;
 
+	int32_t temp, hum;
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	SystemCoreClockUpdate();
@@ -424,9 +445,9 @@ int main(void)
 
 	//printf("SystemClk:%d\r\n",SystemCoreClock);
 	//printf( "ChipID:%08x\r\n", DBGMCU_GetCHIPID() );
-	USART_str("Data Log ADC\n\r");
+	USART_str("Data LOG\n\r");
 	USART_str("SystemClk:");
-	USART_int(SystemCoreClock);
+	USART_int(SystemCoreClock,6);
 	USART_str("\r\n");
 
 
@@ -443,7 +464,7 @@ int main(void)
 	//tamanho da unidade
 	disk_ioctl(FatFs.pdrv,GET_SECTOR_COUNT,(void *)&n_sec);
 	USART_str("SD len:");
-	USART_int(n_sec>>1);  //cada sector de 512 bytes
+	USART_int(n_sec>>1,-1);  //cada sector de 512 bytes
 	USART_str(" kB\r\n");
 
 
@@ -451,23 +472,33 @@ int main(void)
 	{
 		//amostra disponível do conversor ADC
 		if(flag_adc) {
-			DS1307_getTime();  //atuliza time_rtc
-			//monta texto
+
+			//atualiza time_rtc
+			DS1307_getTime();
+
+			//leitura do sensor
+			AHT20_Read(&temp,&hum);
+
+			//monta texto para registro
 			buff_msg[0] = '\0';
 			str_cat(buff_msg,"AD[");
 			conv_rtc2str(buff_msg,1);
 			str_cat(buff_msg,"];");
-			conv_int2str(buff_msg,count_adc,1);
+			conv_int2str(buff_msg,count_adc,1,-1);
 			str_cat(buff_msg,";");
-			conv_int2str(buff_msg,adc_value,1);
+			conv_int2str(buff_msg,adc_value,1,-1);
+			str_cat(buff_msg,";");
+			conv_int2str(buff_msg,temp,1,1);
+			str_cat(buff_msg,";");
+			conv_int2str(buff_msg,hum,1,1);
 			str_cat(buff_msg,"\r\n");
 
-			//envia pela serial
+			//envia pela serial o texto
 			USART_str(buff_msg);
 
 			//grava em arquivo
 			LED_ON();
-			fr = f_open(&Fil, "newfile.txt", FA_WRITE | FA_OPEN_APPEND);	/* Create a file */
+			fr = f_open(&Fil, "REGISTRO.txt", FA_WRITE | FA_OPEN_APPEND);	/* Create a file */
 			if (fr == FR_OK) {
 				f_write(&Fil, buff_msg, str_len(buff_msg), &bw);	/* Write data to the file */
 				fr = f_close(&Fil);							/* Close the file */
@@ -491,9 +522,11 @@ int main(void)
 		//comando disponível
 		if (flag_cmd) {
 
+			LED_ON();
 			USART_str(buff_serial_in);
 			processa_cmd();
 
+			LED_OFF();
 			flag_cmd = 0;
 		}
 

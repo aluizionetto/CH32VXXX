@@ -8,6 +8,7 @@ C_SRCS += \
 ../User/i2c_com.c \
 ../User/main.c \
 ../User/rtc_ds1307.c \
+../User/sensor_aht20.c \
 ../User/system_ch32v00x.c 
 
 OBJS += \
@@ -15,6 +16,7 @@ OBJS += \
 ./User/i2c_com.o \
 ./User/main.o \
 ./User/rtc_ds1307.o \
+./User/sensor_aht20.o \
 ./User/system_ch32v00x.o 
 
 C_DEPS += \
@@ -22,6 +24,7 @@ C_DEPS += \
 ./User/i2c_com.d \
 ./User/main.d \
 ./User/rtc_ds1307.d \
+./User/sensor_aht20.d \
 ./User/system_ch32v00x.d 
 
 
